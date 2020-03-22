@@ -1,0 +1,85 @@
+# select-file
+
+### Copyright (c) 2017-2018 John Carroll, Ann Copestake, Robert Malouf, Stephan Oepen
+### Copyright (c) 2020 John Carroll, Ann Copestake, Robert Malouf, Stephan Oepen, Angelo Rossi
+
+### Author: John Carroll _<j.a.carroll@sussex.ac.uk>_
+### Repackaging, additions for OpenBSD, FreeBSD: Angelo Rossi _<angelo.rossi.homelab@gmail.com>_
+
+File selector dialog for use with McCLIM applications
+=====================================================
+
+## License
+
+MIT
+
+A file selector for CLIM 2, including some programmable customization features.
+
+The API is similar to the select-file in the Franz Inc CLIM 2 User Guide, but is
+intended to be more usable than the Franz implementation, and to provide a facility
+that's missing from McCLIM (there is no select-file in the CLIM 2 Specification).
+It also takes inspiration and some implementation ideas from the nice file browsers
+in the McCLIM Lisp Listener, Gsharp, and Ernestine.
+
+Developed and tested in McCLIM versions up to mcclim-20200218 (in SBCL and Clozure CL);
+also in Franz Allegro CLIM 2.1 / Allegro CL 10.0. Not (yet) tested in LispWorks or
+Liquid CLIM.
+
+  select-file &rest args
+              &key (frame-name 'file-selector)
+                   title
+                   (prompt "Name:")
+                   (directory (user-homedir-pathname))
+                   (dialog-type :save)
+                   show-hidden-p
+                   (ok-label "OK")
+              &allow-other-keys
+
+Other keyword arguments are passed through to make-application-frame, so the programmer
+may also call select-file with arguments accepted by that function. These include:
+
+  left top right bottom
+  width height
+  icon properties
+  user-specified-position-p user-specified-size-p (only in Allegro CLIM)
+  text-style foreground background (only relevant for Allegro CLIM, since it passes these two
+    arguments down to gadget panes)
+
+A calling program may specialize the file-selector class and pass the new class name via
+the :frame-name argument. The generic functions list-directory, list-places and list-devices
+can be specialised on this new file selector class. E.g.
+
+  (defclass my-file-selector (sf:file-selector) ())
+  (defmethod sf:list-places ((frame my-file-selector))
+    (append (call-next-method) (list #P"~/common-lisp/mcclim/")))
+  (sf:select-file :frame-name 'my-file-selector)
+
+The following potential issues have been tested: unreadable directories, 'hidden' files
+and directories, large directories (e.g. /usr/bin/), filenames containing non-printing
+characters, reentrancy (more than one concurrent dialog), 'places' that are files
+not directories. It would have been good to have a drop-down menu containing the path to
+the directory being displayed, but unfortunately the obvious choice of using an option-list
+pane doesn't work since the items in an option-list cannot be dynamically updated.
+
+Distinctive features:
+
+* When dialog-type is :save the user may type in a file name (for use as a "save file"
+dialog), when it is :open the user may only select existing files, and when it is
+:directory the user may only select existing directories.
+* If the user resizes the dialog, the files/directories pane updates its layout to make
+best use of the horizontal space.
+* The programmer can change the pre-supplied lists of files/directories, places and
+devices in the left-hand pane.
+
+Bugs:
+
+* In Allegro CLIM, clicking in the left or right browsing pane and then typing causes the
+characters to be written into the frame not the filename text field.
+
+Examples:
+
+(sf:select-file)
+(sf:select-file :title "Open" :prompt "File:" :dialog-type :open :ok-label "Open")
+(sf:select-file :dialog-type :save :show-hidden-p t)
+(sf:select-file :dialog-type :directory)
+(sf:select-file :directory "/usr/bin/" :left 300 :top 200 :width 400 :height 600)
