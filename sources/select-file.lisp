@@ -2,28 +2,28 @@
 ;;;; select-file.lisp
 ;;;;
 ;;;; Copyright (c) 2017-2020 John Carroll, Ann Copestake, Robert Malouf, Stephan Oepen, Angelo Rossi
-;;
-;; Permission is hereby granted, free of charge, to any person obtaining a copy
-;; of this software and associated documentation files (the "Software"), to deal
-;; in the Software without restriction, including without limitation the rights
-;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-;; copies of the Software, and to permit persons to whom the Software is
-;; furnished to do so, subject to the following conditions:
-;;
-;; The above copyright notice and this permission notice shall be included in all
-;; copies or substantial portions of the Software.
-;;
-;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-;; SOFTWARE.
+;;;
+;;; Permission is hereby granted, free of charge, to any person obtaining a copy
+;;; of this software and associated documentation files (the "Software"), to deal
+;;; in the Software without restriction, including without limitation the rights
+;;; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+;;; copies of the Software, and to permit persons to whom the Software is
+;;; furnished to do so, subject to the following conditions:
+;;;
+;;; The above copyright notice and this permission notice shall be included in all
+;;; copies or substantial portions of the Software.
+;;;
+;;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+;;; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+;;; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+;;; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+;;; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+;;; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;;; SOFTWARE.
 
 (in-package #:select-file)
 
-;; Parameters in use by the application.
+;;; Parameters in use by the application.
 
 (defparameter +outline-gray+ #+:mcclim climi::*3d-dark-color* #-:mcclim (make-gray-color 0.59))
 
@@ -137,8 +137,8 @@
                                     (clim:make-rgb-color 48/255 240/255 48/255)
                                     (clim:make-rgb-color 173/255 173/255 173/255))))
 
-;; Main function.
-;; See the README file for documentation.
+;;; Main function.
+;;; See the README file for documentation.
 
 (defun select-file (&rest args &key
                                  (frame-name 'file-selector)
@@ -190,15 +190,14 @@
       (cl-fad:pathname-as-directory (pathname x))
       (user-homedir-pathname)))
 
-;; Classes.
+;;; Classes.
 
 (cl:defclass files-dirs-application-pane (clim:application-pane)
   ;; inheriting instead from clim-stream-pane might be more appropriate, but in that case in
   ;; McCLIM we don't get scroll wheel support (we don't for either in Allegro CLIM)
   ())
 
-;; Defining file-selector class. This class hold informations on the file-selector dialog
-;; gadgets.
+;;; The file-selector application frame, including gadget definitions and layout
 
 (clim:define-application-frame file-selector ()
   ((prompt :initform nil
@@ -233,7 +232,7 @@
                     :text-cursor nil
                     :max-width 150 ; in Allegro CLIM, this is completely
                                    ; overridden by the hbox-pane spec
-                     :display-time nil
+                    :display-time nil
                     :display-function #'display-places-devices))
    (files-dirs-pane
     (clim:make-pane 'files-dirs-application-pane
@@ -289,11 +288,13 @@
          (clim:vertically (:y-spacing 15)
            (clim:horizontally (:x-spacing 10 :equalize-height t)
              (1/4
-              (clim:outlining (:thickness 1 #+:mcclim :background #+:mcclim +outline-gray+)
-                              ;; in Allegro CLIM, outlining is grey by default - and indeed if we specify
-                              ;; the colour then the scroll bar also picks it up, which we don't want
-                              (clim:scrolling (:scroll-bar :vertical :scroll-bars :vertical) ; CLIM spec ambiguous
-                                places-devices-pane)))
+              (clim:outlining (:thickness 1
+                               ;; in Allegro CLIM, outlining is grey by default - and indeed if
+                               ;; we were to specify the colour then the scroll bar would also
+                               ;; pick it up, which we definitely don't want
+                               #+:mcclim :background #+:mcclim +outline-gray+)
+                (clim:scrolling (:scroll-bar :vertical :scroll-bars :vertical) ; CLIM spec ambiguous
+                  places-devices-pane)))
              (3/4
               (clim:outlining (:thickness 1 #+:mcclim :background #+:mcclim +outline-gray+)
                               (clim:scrolling (:scroll-bar :vertical :scroll-bars :vertical)
@@ -304,7 +305,6 @@
 
              ;; in McCLIM only, wrap whitespace and outline around text-field gadget, otherwise
              ;; it looks too tight and flat
-
              #-:mcclim selection-pane
              #+:mcclim
              (clim:outlining (:thickness 1 :background +outline-gray+)
@@ -318,7 +318,6 @@
            ;; since the McCLIM grid-pane ignores :x-spacing. However there's still a bug
            ;; (probably in grid-pane allocate-space): if the left button label is wider than
            ;; the right, the right button won't move over to the right or grow to match it.
-
            (clim:horizontally ()
              #+:mcclim
              (clim:make-pane 'clim:grid-pane
@@ -328,7 +327,7 @@
              (clim:horizontally (:x-spacing 10) (1/2 ok-button) (1/2 cancel-button))
              :fill))))))
 
-;; Methods related to file-selector class.
+;;; Methods related to file-selector class.
 
 #+:mcclim
 (defmethod clim-extensions:find-frame-type ((frame file-selector))
@@ -354,13 +353,13 @@
   (update-ok-button
    frame (clim:gadget-value (clim:find-pane-named frame 'selection-pane))))
 
-;; Callback functions related to the selection gadgets (buttons).
+;;; Callback functions related to the action gadgets.
 
 (defun update-ok-button (frame new-value)
   (let ((ok-button
          (clim:find-pane-named frame 'ok-button))
         (require-directory-p
-             (eq (file-selector-dialog-type frame) :directory)))
+         (eq (file-selector-dialog-type frame) :directory)))
     (when ok-button ; the gadget might not be associated with this frame yet
       (if (eq (and (cl-fad:directory-pathname-p new-value) t) require-directory-p)
           (clim:activate-gadget ok-button)
@@ -416,8 +415,8 @@
            (setf last-margin margin)
            (clim:execute-frame-command frame `(com-resize-panes ,frame))))))))
 
-;; Panes class definitions.
-;;; Files and directories list pane
+;;; Panes class definitions.
+;;; Files and directories list pane. This is the pane on the right.
 
 (clim:define-presentation-type file-dir-namestring ())
 
@@ -521,7 +520,6 @@
     ;; in McCLIM only, need to indicate that the content of this pane may have a new height
     ;; so the scroller should update - and a new width to prevent the pane being scrollable
     ;; horizontally (e.g. with touchpad) if it has got narrower
-
     #+:mcclim
     (multiple-value-bind (w h)
         (clim:bounding-rectangle-size (clim:stream-output-history stream))
@@ -538,7 +536,6 @@
 
     ;; !!! in McCLIM only, draw invisible points immediately to the left and right, otherwise
     ;; presentation highlighting does not give enough room
-
     (multiple-value-bind (x y)
         (clim:stream-cursor-position stream)
       #+:mcclim
@@ -546,7 +543,6 @@
         (clim:draw-point* stream x (1- y) :line-thickness 1 :ink clim:+white+)
         (incf x))
       (clim:draw-pattern* stream pattern x y)
-      ;; (draw-rectangle* stream x y (+ x 16) (+ y 16) :ink +gray+) ; !!! A LOT faster...why?
       (incf x (+ (clim:pattern-width pattern) 4))
       (clim:draw-text* stream
                        text
@@ -584,19 +580,17 @@
   (:documentation "Returns a list of pathnames, the first being the parent directory of dir (or NIL if dir is the root of a file system) and the rest being the contents of dir. The show-hidden-p argument is passed through from the top-level call, intended to control whether file names starting with a period should be filtered out or not."))
 
 (defmethod list-directory ((frame file-selector) dir &optional (show-hidden-p nil))
-
-  ;; we need list-directory to follow symlinks otherwise it's not possible to follow a
-  ;; symbolic link to a directory (e.g. tmp -> private/tmp, since in this case tmp
-  ;; looks like a normal file)
-
   (flet ((sorted-filtered-ls (d)
 
            ;; macOS always encodes file names as Unicode NFD no matter what the locale setting
            ;; is, so avoid a possible error here (in sbcl it's sb-int:c-string-decoding-error)
            ;; by ignoring a possibly misleading setting
-
            (let* (#+(and :sbcl :darwin) (sb-alien::*default-c-string-external-format* :utf-8)
-                    (items (cl-fad:list-directory d)))
+
+                  ;; this call to list-directory resolves symlinks otherwise it's not possible
+                  ;; to follow a symbolic link to a directory (e.g. tmp -> private/tmp, since
+                  ;; in this case tmp looks like a normal file)
+                  (items (cl-fad:list-directory d)))
              (sort
               (if show-hidden-p
                   items
@@ -643,7 +637,8 @@
   (make-pathname :directory (butlast (pathname-directory p)) :defaults p))
 
 ;;; 'Places' and 'devices' pane containing user home directory, any useful files or directories
-;;; (achieved by specialising list-places), and roots of file systems on mounted devices
+;;; (achieved by specialising list-places), and roots of file systems on mounted devices. This
+;;; is the pane on the left.
 
 (clim:define-presentation-type place-device-namestring ())
 
@@ -671,10 +666,8 @@
    stream 'place-device-namestring 1))
 
 (defun place-device-namestring (x)
-
   ;; return name containing pathname device and last component of directory (if any) - to
   ;; look like a "device" as might be shown to the user on the desktop
-
   (let ((dev (pathname-device x))
         (dir (car (last (pathname-directory x)))))
     (when dir
@@ -733,7 +726,7 @@
            ((and p2-dir (symbolp p2-dir)) nil)
            (t (string< (string p1-dir) (string p2-dir))))))))
 
-;; Add select-file keyword to *features* global variable.
+;;; Having successfully loaded, add :select-file as a feature.
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (pushnew :select-file *features*))
