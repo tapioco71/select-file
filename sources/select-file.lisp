@@ -181,7 +181,6 @@
                       :show-hidden-p show-hidden-p
                       :ok-label ok-label
                       args)))
-    (setf (file-selector-show-hidden-p frame) show-hidden-p)
     (setf (file-selector-files-dirs frame) (list-directory frame directory show-hidden-p))
     (clim:run-frame-top-level frame)
     (file-selector-result frame)))
@@ -262,12 +261,11 @@
                                                   (update-ok-button frame new-value)))
                     :max-width clim:+fill+))
    (show-hidden-files-check-box
-    (let* ((choices (list (clim:make-pane 'clim:toggle-button :label "Show hidden files" :width 40)))
-           (current (first choices)))
-      (clim:make-pane 'clim:check-box
-                      :choices choices
-                      :selection (list current)
-                      :value-changed-callback 'show-hidden-files-callback)))
+    (clim:make-pane 'clim:toggle-button
+                    :label "Show hidden files"
+                    :indicator-type :some-of
+                    :value (file-selector-show-hidden-p clim:*application-frame*)
+                    :value-changed-callback 'show-hidden-files-callback))
    (ok-button
     (clim:make-pane 'clim:push-button
                     :label (concatenate 'string
@@ -300,7 +298,7 @@
               (clim:outlining (:thickness 1 #+:mcclim :background #+:mcclim +outline-gray+)
                               (clim:scrolling (:scroll-bar :vertical :scroll-bars :vertical)
                                 files-dirs-pane))))
-           show-hidden-files-check-box
+           (clim:horizontally () show-hidden-files-check-box :fill)
            (clim:horizontally (:x-spacing 10 :align-y :center :equalize-height nil)
              prompt-pane
 
@@ -383,14 +381,13 @@
 (defun show-hidden-files-callback (checkbox value)
   (declare (ignore checkbox))
   (clim:with-application-frame (frame)
-    (if (clim:gadget-value checkbox)
-        (setf (file-selector-show-hidden-p frame) t)
-        (setf (file-selector-show-hidden-p frame) nil))
-    (setf (file-selector-files-dirs frame)
-          (list-directory frame
-                          (file-selector-directory frame)
-                          (file-selector-show-hidden-p frame)))
-    (display-files-dirs frame (clim:find-pane-named frame 'files-dirs-pane))))
+    (with-slots (files-dirs show-hidden-p) frame
+      (setf show-hidden-p value)
+      (setf files-dirs
+            (list-directory frame
+                            (clim:gadget-value (clim:find-pane-named frame 'selection-pane))
+                            value))
+      (display-files-dirs frame (clim:find-pane-named frame 'files-dirs-pane)))))
 
 ;;; Detect resizing of the dialog, by an :after method on allocate-space. A more direct
 ;;; solution might be be a handle-event method on window-configuration-event; however
