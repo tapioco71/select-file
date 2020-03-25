@@ -212,7 +212,7 @@
                 :reader file-selector-dialog-type)
    (show-hidden-p :initform nil
                   :initarg :show-hidden-p
-                  :accessor file-selector-show-hidden-p)
+                  :reader file-selector-show-hidden-p)
    (ok-label :initform nil
              :initarg :ok-label
              :reader file-selector-ok-label)
@@ -583,7 +583,7 @@
 (defgeneric list-directory (frame dir &optional show-hidden-p)
   (:documentation "Returns a list of pathnames, the first being the parent directory of dir (or NIL if dir is the root of a file system) and the rest being the contents of dir. The show-hidden-p argument is passed through from the top-level call, intended to control whether file names starting with a period should be filtered out or not."))
 
-(defmethod list-directory ((frame file-selector) dir &optional (show-hidden-p nil))
+(defmethod list-directory ((frame file-selector) dir &optional show-hidden-p)
 
   ;; we need list-directory to follow symlinks otherwise it's not possible to follow a
   ;; symbolic link to a directory (e.g. tmp -> private/tmp, since in this case tmp
