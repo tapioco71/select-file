@@ -384,7 +384,8 @@
       (setf show-hidden-p value)
       (setf files-dirs
             (list-directory frame
-                            (clim:gadget-value (clim:find-pane-named frame 'selection-pane))
+                            (pathname-directory-pathname
+                              (clim:gadget-value (clim:find-pane-named frame 'selection-pane)))
                             value))
       (display-files-dirs frame (clim:find-pane-named frame 'files-dirs-pane)))))
 
@@ -404,7 +405,7 @@
   ;; but not otherwise - I think it should always
   #+:mcclim
   (setf (clim:stream-text-margin pane)
-        (clim:bounding-rectangle-width (pane-viewport-region pane)))
+        (clim:bounding-rectangle-width (clim:pane-viewport-region pane)))
   (let ((margin (clim:stream-text-margin pane)))
     (clim:with-application-frame (frame)
       (with-slots (last-margin) frame
@@ -418,7 +419,8 @@
 ;;; Panes class definitions.
 ;;; Files and directories list pane. This is the pane on the right.
 
-(clim:define-presentation-type file-dir-namestring ())
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (clim:define-presentation-type file-dir-namestring ()))
 
 (define-file-selector-command com-select-file-dir
     ((data 'file-dir-namestring :gesture :select))
@@ -621,24 +623,30 @@
     (t
      (car (last (pathname-directory x))))))
 
+;;; Avoid problems if we're in an environment with an old version of cl-fad (before 0.7.0?)
+
 (defun pathname-root-p (p)
-  ;; avoid problems if we're in an environment with an old version of cl-fad
   (if (fboundp (intern "PATHNAME-ROOT-P" :fad))
-    (funcall (intern "PATHNAME-ROOT-P" :fad) p)
-    (equal (pathname-directory p) '(:absolute))))
+      (funcall (intern "PATHNAME-ROOT-P" :fad) p)
+      (equal (pathname-directory p) '(:absolute))))
 
 (defun pathname-parent-directory (p)
-  ;; avoid problems if we're in an environment with an old version of cl-fad
   ;; argument p known not to be root
   (if (fboundp (intern "PATHNAME-PARENT-DIRECTORY" :fad))
-    (funcall (intern "PATHNAME-PARENT-DIRECTORY" :fad) p)
-    (make-pathname :directory (butlast (pathname-directory p)) :defaults p)))
+      (funcall (intern "PATHNAME-PARENT-DIRECTORY" :fad) p)
+      (make-pathname :directory (butlast (pathname-directory p)) :defaults p)))
+
+(defun pathname-directory-pathname (p)
+  (if (fboundp (intern "PATHNAME-DIRECTORY-PATHNAME" :fad))
+      (funcall (intern "PATHNAME-DIRECTORY-PATHNAME" :fad) p)
+      (make-pathname :defaults p :name nil :type nil)))
 
 ;;; 'Places' and 'devices' pane containing user home directory, any useful files or directories
 ;;; (achieved by specialising list-places), and roots of file systems on mounted devices. This
 ;;; is the pane on the left.
 
-(clim:define-presentation-type place-device-namestring ())
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (clim:define-presentation-type place-device-namestring ()))
 
 (define-file-selector-command com-select-place-device-namestring
     ((data 'place-device-namestring :gesture :select))
