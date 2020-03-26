@@ -25,7 +25,7 @@
 
 ;;; Parameters in use by the application.
 
-(defparameter +outline-gray+ #+:mcclim climi::*3d-dark-color* #-:mcclim (make-gray-color 0.59))
+(defparameter +outline-gray+ #+:mcclim climi::*3d-dark-color* #-:mcclim (clim:make-gray-color 0.59))
 
 (defparameter +text-gray+ (clim:make-gray-color 0.66))
 
@@ -297,8 +297,8 @@
                   places-devices-pane)))
              (3/4
               (clim:outlining (:thickness 1 #+:mcclim :background #+:mcclim +outline-gray+)
-                              (clim:scrolling (:scroll-bar :vertical :scroll-bars :vertical)
-                                files-dirs-pane))))
+                (clim:scrolling (:scroll-bar :vertical :scroll-bars :vertical)
+                  files-dirs-pane))))
            (clim:horizontally () show-hidden-files-check-box :fill)
            (clim:horizontally (:x-spacing 10 :align-y :center :equalize-height nil)
              prompt-pane
@@ -397,7 +397,7 @@
   (display-files-dirs
    frame (clim:find-pane-named frame 'files-dirs-pane) t))
 
-(defmethod allocate-space :after ((pane files-dirs-application-pane) width height)
+(defmethod clim:allocate-space :after ((pane files-dirs-application-pane) width height)
   (declare (ignore width height))
   ;; in McCLIM, a horizontal resize of an application / scroll pane combo updates the
   ;; application pane's text-margin if the scroll pane has a horizontal scroll bar,
@@ -622,19 +622,17 @@
      (car (last (pathname-directory x))))))
 
 (defun pathname-root-p (p)
-  ;; this function is missing from old versions of cl-fad
-  #-:fad-old-version
-  (cl-fad:pathname-root-p p)
-  #+:fad-old-version
-  (equal (pathname-directory p) '(:absolute)))
+  ;; avoid problems if we're in an environment with an old version of cl-fad
+  (if (fboundp (intern "PATHNAME-ROOT-P" :fad))
+    (funcall (intern "PATHNAME-ROOT-P" :fad) p)
+    (equal (pathname-directory p) '(:absolute))))
 
 (defun pathname-parent-directory (p)
-  ;; this function is missing from old versions of cl-fad
-  ;; p known not to be root
-  #-:fad-old-version
-  (cl-fad:pathname-parent-directory p)
-  #+:fad-old-version
-  (make-pathname :directory (butlast (pathname-directory p)) :defaults p))
+  ;; avoid problems if we're in an environment with an old version of cl-fad
+  ;; argument p known not to be root
+  (if (fboundp (intern "PATHNAME-PARENT-DIRECTORY" :fad))
+    (funcall (intern "PATHNAME-PARENT-DIRECTORY" :fad) p)
+    (make-pathname :directory (butlast (pathname-directory p)) :defaults p)))
 
 ;;; 'Places' and 'devices' pane containing user home directory, any useful files or directories
 ;;; (achieved by specialising list-places), and roots of file systems on mounted devices. This
