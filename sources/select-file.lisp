@@ -338,7 +338,7 @@
   ;; make file selector have more dialog-like window controls (e.g. no maximize button)
   :dialog)
 
-(defmethod run-frame-top-level :before ((frame file-selector) &key &allow-other-keys)
+(defmethod clim:run-frame-top-level :before ((frame file-selector) &key &allow-other-keys)
   ;; !!! The order in which threads run in McCLIM/CLX/X11 may prevent a new frame from opening
   ;; at the top of the stack, requiring the user to click on it to activate it. I can't pin
   ;; down the circumstances in which this happens, but calling sleep here seems to be an
