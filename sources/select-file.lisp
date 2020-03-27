@@ -225,6 +225,24 @@
            :accessor file-selector-result))
   (:menu-bar nil)
   (:panes
+   ;; In McCLIM, putting the file selection text-field here ensures it gets keyboard focus,
+   ;; since frame-standard-output returns the first defined application-pane that's visible.
+   ;; In Allegro CL this does not work - nor does specialising frame-standard-output to
+   ;; return this pane since a text-field is not a stream; see 'bugs'
+   (selection-pane
+    (clim:make-pane 'clim:text-field
+                    :foreground clim:+black+
+                    :background clim:+white+
+                    :editable-p (if (member (file-selector-dialog-type clim:*application-frame*)
+                                            '(:open :directory))
+                                    nil
+                                    t)
+                    :value (namestring (file-selector-directory clim:*application-frame*))
+                    :value-changed-callback #'(lambda (gadget new-value)
+                                                (declare (ignore gadget))
+                                                (clim:with-application-frame (frame)
+                                                  (update-ok-button frame new-value)))
+                    :max-width clim:+fill+))
    (places-devices-pane
     (clim:make-pane 'clim:application-pane
                     :foreground clim:+black+
@@ -245,20 +263,6 @@
     (clim:make-pane 'clim:label-pane
                     :label (file-selector-prompt clim:*application-frame*)
                     #+:mcclim :max-width #+:mcclim '(:relative 0))) ; prevent the label stretching
-   (selection-pane
-    (clim:make-pane 'clim:text-field
-                    :foreground clim:+black+
-                    :background clim:+white+
-                    :editable-p (if (member (file-selector-dialog-type clim:*application-frame*)
-                                            '(:open :directory))
-                                    nil
-                                    t)
-                    :value (namestring (file-selector-directory clim:*application-frame*))
-                    :value-changed-callback #'(lambda (gadget new-value)
-                                                (declare (ignore gadget))
-                                                (clim:with-application-frame (frame)
-                                                  (update-ok-button frame new-value)))
-                    :max-width clim:+fill+))
    (show-hidden-files-check-box
     (clim:make-pane 'clim:toggle-button
                     :label "Show hidden files"
@@ -333,16 +337,6 @@
 (defmethod clim-extensions:find-frame-type ((frame file-selector))
   ;; make file selector have more dialog-like window controls (e.g. no maximize button)
   :dialog)
-
-#+:mcclim
-(defmethod frame-standard-output ((frame file-selector))
-  ;; direct keyboard input to the text-field gadget without user having to click on it
-  ;; - only for McCLIM since nothing analogous seems to work in Allegro CLIM
-  (let ((selection-pane (clim:find-pane-named frame 'selection-pane)))
-    (or
-     (ignore-errors
-       (climi::substrate selection-pane)) ; !!! wish we didn't need an undocumented function
-     (call-next-method))))
 
 (defmethod run-frame-top-level :before ((frame file-selector) &key &allow-other-keys)
   ;; !!! The order in which threads run in McCLIM/CLX/X11 may prevent a new frame from opening

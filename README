@@ -74,7 +74,8 @@ devices in the left-hand pane.
 Bugs:
 
 * In Allegro CLIM, clicking in the left or right browsing pane and then typing causes the
-characters to be written into the frame not the filename text field.
+characters to be written into the frame not the filename text field; also, the filename
+text field must be clicked on before it can be typed into.
 
 Examples:
 
